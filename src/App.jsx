@@ -72,7 +72,7 @@ const App = () => {
   };
 
   const contactDealer = (car) => {
-    const phone = "2348000000000"; 
+    const phone = "2348079387611"; 
     const msg = `Hello! Interested in the ${car.year} ${car.name} (₦${car.price}).`;
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
   };
