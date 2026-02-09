@@ -81,7 +81,7 @@ const App = () => {
     <div className={`min-h-screen font-sans relative transition-colors duration-500 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
       {/* BACKGROUNDS */}
       <div className="fixed inset-0 -z-20">
-        <img src="src/assets/logored.jpeg" className="w-full h-full object-cover" alt="bg" />
+        <img src="/logored.jpeg" className="w-full h-full object-cover" alt="bg" />
       </div>
       <div className={`fixed inset-0 -z-10 backdrop-blur-2xl transition-colors duration-500 ${isDarkMode ? 'bg-black/80' : 'bg-white/60'}`} />
 
