@@ -5,6 +5,7 @@ import {
   ShieldCheck, Car, Search, Moon, Sun, Menu
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Analytics } from '@vercel/analytics/react';
 
 const App = () => {
   const [isAdmin, setIsAdmin] = useState(false);
@@ -206,6 +207,7 @@ const App = () => {
           <PostModal isDarkMode={isDarkMode} onClose={() => setShowPostModal(false)} onPost={handleAddCar} />
         )}
       </AnimatePresence>
+      <Analytics />
     </div>
   );
 };
