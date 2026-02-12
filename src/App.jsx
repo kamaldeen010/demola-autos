@@ -2,14 +2,14 @@ import { supabase } from './supabaseClient';
 import React, { useState, useRef, useEffect } from 'react'; 
 import { 
   Camera, MessageCircle, Plus, X, Trash2, 
-  ShieldCheck, Car, Search, Maximize2, Moon, Sun, Menu
+  ShieldCheck, Car, Search, Moon, Sun, Menu
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const App = () => {
   const [isAdmin, setIsAdmin] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false); // 1. Dark Mode State
-  const [showMobileMenu, setShowMobileMenu] = useState(false); // 2. Hamburger State
+  const [isDarkMode, setIsDarkMode] = useState(false); 
+  const [showMobileMenu, setShowMobileMenu] = useState(false); 
   const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [showPostModal, setShowPostModal] = useState(false);
   const [passcodeInput, setPasscodeInput] = useState("");
@@ -47,21 +47,40 @@ const App = () => {
   };
   
   const handleAddCar = async (newCar, file) => {
-    let finalImageUrl = newCar.img;
+    let finalImageUrl = "";
+    
+    // 1. UPLOAD TO BUCKET
     if (file) {
-      const fileName = `${Date.now()}-${file.name}`;
+      const fileName = `${Date.now()}-${file.name.replace(/\s/g, '_')}`;
       const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('car-images').upload(fileName, file);
-      if (!uploadError) {
-        const { data } = supabase.storage.from('car-images').getPublicUrl(fileName);
-        finalImageUrl = data.publicUrl;
+        .from('car-images')
+        .upload(fileName, file);
+
+      if (uploadError) {
+        alert("Upload Error: " + uploadError.message);
+        return;
       }
+
+      // 2. GET PUBLIC URL
+      const { data } = supabase.storage.from('car-images').getPublicUrl(fileName);
+      finalImageUrl = data.publicUrl;
     }
+
+    // 3. INSERT INTO DATABASE
     const { error } = await supabase.from('cars').insert([{ 
-      name: newCar.name, price: newCar.price, year: newCar.year, 
-      condition: newCar.condition, image_url: finalImageUrl 
+      name: newCar.name, 
+      price: newCar.price, 
+      year: newCar.year, 
+      condition: newCar.condition, 
+      image_url: finalImageUrl 
     }]);
-    if (!error) { fetchCars(); setShowPostModal(false); }
+
+    if (!error) { 
+      fetchCars(); 
+      setShowPostModal(false); 
+    } else {
+      alert("Database Error: " + error.message);
+    }
   };
 
   const deleteCar = async (id) => {
@@ -85,24 +104,21 @@ const App = () => {
       </div>
       <div className={`fixed inset-0 -z-10 backdrop-blur-2xl transition-colors duration-500 ${isDarkMode ? 'bg-black/80' : 'bg-white/60'}`} />
 
-      {/* --- NAVBAR WITH HAMBURGER --- */}
+      {/* NAVBAR */}
       <nav className={`p-4 sticky top-0 z-50 flex justify-between items-center px-6 border-b transition-colors ${isDarkMode ? 'bg-black/40 border-white/10' : 'bg-white/20 border-white/40'}`}>
         <h1 className={`text-lg font-black italic tracking-tighter ${isDarkMode ? 'text-blue-400' : 'text-blue-700'}`}>
           DEMOLA KBJ<span className={isDarkMode ? 'text-white' : 'text-black'}>AUTOS</span>
         </h1>
         
         <div className="flex items-center gap-3">
-          {/* Theme Toggle */}
           <button onClick={() => setIsDarkMode(!isDarkMode)} className="p-2 rounded-lg bg-white/10 border border-white/20">
             {isDarkMode ? <Sun size={18} className="text-yellow-400" /> : <Moon size={18} className="text-blue-700" />}
           </button>
           
-          {/* Hamburger Icon (Mobile Only) */}
           <button onClick={() => setShowMobileMenu(!showMobileMenu)} className="md:hidden p-2">
             <Menu size={24} className={isDarkMode ? 'text-white' : 'text-slate-900'} />
           </button>
 
-          {/* Desktop Nav */}
           <div className="hidden md:block">
             <button onClick={() => isAdmin ? setIsAdmin(false) : setShowAdminLogin(true)} className="text-[10px] font-black uppercase px-4 py-2 rounded-lg border border-blue-100 bg-white/80 text-blue-800">
               {isAdmin ? "Logout" : "Dealer Access"}
@@ -111,7 +127,7 @@ const App = () => {
         </div>
       </nav>
 
-      {/* Mobile Menu Overlay */}
+      {/* Mobile Menu */}
       <AnimatePresence>
         {showMobileMenu && (
           <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className={`absolute top-16 left-0 w-full p-6 z-40 border-b shadow-2xl ${isDarkMode ? 'bg-slate-900 border-white/10' : 'bg-white border-slate-100'}`}>
@@ -132,7 +148,7 @@ const App = () => {
         </motion.div>
       </header>
 
-      {/* SEARCH BAR */}
+      {/* SEARCH */}
       <div className="px-6 max-w-3xl mx-auto mb-6">
         <div className="relative">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
@@ -160,7 +176,7 @@ const App = () => {
         </div>
       </main>
 
-      {/* MODALS (Admin, Post, Lightbox) */}
+      {/* Lightbox */}
       <AnimatePresence>
         {selectedImage && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[300] bg-black/95 backdrop-blur-xl flex items-center justify-center p-4" onClick={() => setSelectedImage(null)}>
@@ -170,6 +186,7 @@ const App = () => {
         )}
       </AnimatePresence>
 
+      {/* Admin Login Modal */}
       <AnimatePresence>
         {showAdminLogin && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/40 backdrop-blur-sm">
@@ -183,6 +200,7 @@ const App = () => {
         )}
       </AnimatePresence>
 
+      {/* Post Modal */}
       <AnimatePresence>
         {showPostModal && (
           <PostModal isDarkMode={isDarkMode} onClose={() => setShowPostModal(false)} onPost={handleAddCar} />
@@ -209,6 +227,7 @@ const PostModal = ({ onClose, onPost, isDarkMode }) => {
           <div onClick={() => fileRef.current.click()} className="aspect-video border-2 border-dashed rounded-3xl flex flex-col items-center justify-center cursor-pointer bg-white/5 border-white/20">
             <input type="file" accept="image/*" ref={fileRef} className="hidden" onChange={(e) => {
               const selectedFile = e.target.files[0];
+              if (!selectedFile) return;
               setFile(selectedFile);
               const reader = new FileReader();
               reader.onload = (r) => setImage(r.target.result);
@@ -220,12 +239,12 @@ const PostModal = ({ onClose, onPost, isDarkMode }) => {
         ) : (
           <div className="space-y-4">
             <img src={image} className="aspect-video w-full object-cover rounded-2xl" alt="preview" />
-            <input type="text" placeholder="Model" className="w-full p-4 rounded-xl font-bold text-sm bg-white/10 border border-white/10" onChange={(e) => setForm({...form, name: e.target.value})} />
+            <input type="text" placeholder="Model" className={`w-full p-4 rounded-xl font-bold text-sm ${isDarkMode ? 'bg-white/10 border-white/10' : 'bg-slate-50'}`} onChange={(e) => setForm({...form, name: e.target.value})} />
             <div className="grid grid-cols-2 gap-4">
-              <input type="number" placeholder="Year" className="w-full p-4 rounded-xl font-bold text-sm bg-white/10 border border-white/10" onChange={(e) => setForm({...form, year: e.target.value})} />
-              <input type="text" placeholder="Price" className="w-full p-4 rounded-xl font-bold text-blue-500 text-sm bg-white/10 border border-white/10" onChange={(e) => setForm({...form, price: e.target.value})} />
+              <input type="number" placeholder="Year" className={`w-full p-4 rounded-xl font-bold text-sm ${isDarkMode ? 'bg-white/10 border-white/10' : 'bg-slate-50'}`} onChange={(e) => setForm({...form, year: e.target.value})} />
+              <input type="text" placeholder="Price" className={`w-full p-4 rounded-xl font-bold text-blue-500 text-sm ${isDarkMode ? 'bg-white/10 border-white/10' : 'bg-slate-50'}`} onChange={(e) => setForm({...form, price: e.target.value})} />
             </div>
-            <select className="w-full p-4 rounded-xl font-bold text-sm bg-white/10 border border-white/10 text-black md:text-white" onChange={(e) => setForm({...form, condition: e.target.value})}>
+            <select className={`w-full p-4 rounded-xl font-bold text-sm ${isDarkMode ? 'bg-slate-800 text-white' : 'bg-slate-50 text-black'}`} onChange={(e) => setForm({...form, condition: e.target.value})}>
                 <option>Tokunbo</option>
                 <option>Nigerian Used</option>
                 <option>Brand New</option>
@@ -241,7 +260,7 @@ const PostModal = ({ onClose, onPost, isDarkMode }) => {
 const ProductCard = ({ car, isAdmin, isDarkMode, onDelete, onContact, onImageClick }) => (
   <motion.div layout whileHover={{ y: -5 }} className={`p-2.5 rounded-[1.8rem] shadow-lg group border transition-all ${isDarkMode ? 'bg-white/5 border-white/10 shadow-black/40' : 'bg-white/70 border-white shadow-blue-900/5'}`}>
     <div className="aspect-[4/3] rounded-[1.4rem] overflow-hidden relative mb-3 cursor-zoom-in" onClick={() => onImageClick(car.image_url)}>
-      <img src={car.image_url} className="w-full h-full object-cover" alt="car"/>
+      <img src={car.image_url} className="w-full h-full object-cover" alt="car" onError={(e) => { e.target.src = "https://via.placeholder.com/400x300?text=Image+Not+Found"; }}/>
       <div className="absolute top-2 right-2 bg-blue-600 px-2 py-0.5 rounded-full text-[7px] font-black uppercase text-white shadow-md">
         {car.condition}
       </div>
