@@ -6,7 +6,6 @@ import {
   ShieldCheck, Car, Search, Moon, Sun, Menu, Loader2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Analytics } from '@vercel/analytics/react';
 
 const App = () => {
   const [loadingApp, setLoadingApp] = useState(true); // Animation 1
@@ -259,7 +258,6 @@ const App = () => {
           <PostModal isDarkMode={isDarkMode} onClose={() => setShowPostModal(false)} onPost={handleAddCar} isUploading={isUploading} />
         )}
       </AnimatePresence>
-      <Analytics />
     </div>
   );
 };
